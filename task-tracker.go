@@ -31,8 +31,10 @@ type Todo struct {
 }
 
 const (
-	BOLDGREEN = "\033[32;1m"
-	RESET     = "\033[0m"
+	BOLDGREEN     = "\033[32;1m"
+	BOLDYELLOW    = "\033[33;1m"
+	BOLDUNDERLINE = "\033[1;4m"
+	RESET         = "\033[0m"
 )
 
 func addTodo(todos *Todos, desc string) {
@@ -54,11 +56,26 @@ func addTodo(todos *Todos, desc string) {
 		UpdatedAt:   time.Now(),
 	}
 	todos.Todos = append(todos.Todos, newTodo)
-	fmt.Printf("%s Task added successfully (ID: %d) %s\n", BOLDGREEN, newTodo.Id, RESET)
+	fmt.Printf("%s\t Task added successfully (ID: %d) %s\n", BOLDGREEN, newTodo.Id, RESET)
 }
 
 func listTodos(todos Todos, status TodoStatus) {
-
+	var statusMap = map[TodoStatus]string{
+		TODO:       "Todo",
+		INPROGRESS: "In Progress",
+		DONE:       "Done",
+	}
+	if len(todos.Todos) == 0 {
+		fmt.Printf("\n %s\tNo tasks added yet.%s\n", BOLDYELLOW, RESET)
+		return
+	}
+	fmt.Printf("%s%2s  %-35s  %12s%s\n", BOLDUNDERLINE, "ID", "Description", "Status", RESET)
+	for index := 0; index < len(todos.Todos); index++ {
+		todo := todos.Todos[index]
+		if status == ALL || status == todo.Status {
+			fmt.Printf("%2d  %-35s  %12s\n", todo.Id, todo.Description, statusMap[todo.Status])
+		}
+	}
 }
 
 func updateTodo(id int) {
@@ -89,6 +106,19 @@ func main() {
 	switch args[0] {
 	case "add":
 		addTodo(&todos, strings.Join(args[1:], " "))
+	case "list":
+		var statusMap = map[string]TodoStatus{
+			"todo":        TODO,
+			"in-progress": INPROGRESS,
+			"done":        DONE,
+		}
+		var status TodoStatus
+		if len(args) == 1 {
+			status = ALL
+		} else {
+			status = statusMap[args[1]]
+		}
+		listTodos(todos, status)
 	}
 
 	// Save updated todo data to file
